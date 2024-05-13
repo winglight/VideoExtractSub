@@ -1,34 +1,13 @@
 import os
 import subprocess
-import shutil
-from string import Template
 
-# 配置
-VIDEO_DIR = './videos'
-TRANSLATE_CONFIG = {
-    'source_language': 'en',
-    'target_language': 'zh'
-}
-WHISPER_MODEL = 'base'
-
-# 渲染模板字符串
-def render_template(template, data):
-    return Template(template).substitute(data)
-
-# 渲染文件路径
-def render_file_path(template, file_name):
-    data = {
-        'fileName': file_name,
-        'sourceLanguage': TRANSLATE_CONFIG['source_language'],
-        'targetLanguage': TRANSLATE_CONFIG['target_language']
-    }
-    final_path = template or f'temp-{file_name}'
-    file_path = render_template(final_path, data)
-    return os.path.join(VIDEO_DIR, file_path)
+from config import (
+    WHISPER_MODEL
+)
 
 # 提取音频
 def extract_audio(video_path, audio_path):
-    cmd = f'ffmpeg -i {video_path} -ar 16000 -ac 1 -c:a pcm_s16le -y {audio_path}'
+    cmd = f'ffmpeg -i "{video_path}" -ar 16000 -ac 1 -c:a pcm_s16le -y "{audio_path}"'
     subprocess.run(cmd, shell=True, check=True)
 
 # 运行命令
