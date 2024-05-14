@@ -28,7 +28,7 @@ def install_whisper():
 
     if not os.path.exists(local_path):
         print('Cloning whisper.cpp repository')
-        run_command('git', ['clone', repo_url])
+        run_command('git', ['clone', '--depth 1', repo_url])
 
     if not os.path.exists(model_path):
         print('Installing whisper.cpp model')
