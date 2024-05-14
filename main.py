@@ -1,7 +1,7 @@
 import os
 import subprocess
 from config import (
-    VIDEO_DIR, VIDEO_SUFFIX, WHISPER_MODEL, TRANSLATE_CONFIG
+    VIDEO_DIRS, VIDEO_SUFFIX, WHISPER_MODEL, TRANSLATE_CONFIG
 )
 from utils import extract_audio, install_whisper
 
@@ -40,15 +40,16 @@ def process_file(file_path, base_dir):
         except Exception as e:
             log(f'执行出错 {e}')
 
-def traverse_dirs(dir_path, level=1):
-    if level > 3:
+def traverse_dirs(dir_paths, level=1):
+    if level > 4:
         return
 
-    for entry in os.listdir(dir_path):
-        entry_path = os.path.join(dir_path, entry)
-        if os.path.isdir(entry_path):
-            traverse_dirs(entry_path, level + 1)
-        else:
-            process_file(entry_path, dir_path)
+    for dir_path in dir_paths:
+        for entry in os.listdir(dir_path):
+            entry_path = os.path.join(dir_path, entry)
+            if os.path.isdir(entry_path):
+                traverse_dirs([entry_path], level + 1)
+            else:
+                process_file(entry_path, dir_path)
 
-traverse_dirs(VIDEO_DIR)            
+traverse_dirs(VIDEO_DIRS)            

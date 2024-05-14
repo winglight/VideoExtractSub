@@ -12,7 +12,7 @@ load_dotenv()
 # WHISPER_MODEL = 'medium.en'
 
 # 翻译配置,视频原语言与翻译后的目标语言
-VIDEO_DIR = os.getenv('VIDEO_DIR')
+VIDEO_DIRS = [d.strip() for d in os.getenv('VIDEO_DIRS').split(',')]
 VIDEO_SUFFIX = os.getenv('VIDEO_SUFFIX')
 WHISPER_MODEL = os.getenv('WHISPER_MODEL')
 TRANSLATE_CONFIG = {
