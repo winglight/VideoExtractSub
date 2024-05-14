@@ -1,7 +1,7 @@
 import os
 import subprocess
 from config import (
-    VIDEO_DIR, WHISPER_MODEL, TRANSLATE_CONFIG
+    VIDEO_DIR, VIDEO_SUFFIX, WHISPER_MODEL, TRANSLATE_CONFIG
 )
 from utils import extract_audio, install_whisper
 
@@ -16,7 +16,7 @@ install_whisper()
 
 def process_file(file_path, base_dir):
     file_name = os.path.basename(file_path)
-    if file_name.endswith('.mp4') and not file_name.startswith("."):
+    if file_name.endswith(VIDEO_SUFFIX) and not file_name.startswith("."):
         log(f'开始处理文件：{file_path}')
         try:
             base_name = os.path.splitext(file_name)[0]
