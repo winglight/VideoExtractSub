@@ -5,6 +5,9 @@ from config import (
 )
 from utils import extract_audio, install_whisper
 import time
+import threading
+import tkinter as tk
+from tkinter import filedialog, ttk, messagebox
 
 install_whisper()
 
@@ -70,4 +73,201 @@ def traverse_dirs(dir_paths, level=1):
                     progress = processed_count / total_files * 100
                     print(f"\r进度: {progress:.2f}% 剩余时间: {time.strftime('%H:%M:%S', time.gmtime(remaining_time))}", end="")
 
-traverse_dirs(VIDEO_DIRS)            
+# traverse_dirs(VIDEO_DIRS)         
+
+class App:
+    def __init__(self, root):
+        self.root = root
+        self.root.title('视频字幕批量导出工具')
+        self.create_widgets()
+
+    def create_widgets(self):
+        # 配置部分
+        self.config_frame = tk.LabelFrame(self.root, text='配置')
+        self.config_frame.pack(fill='x', padx=10, pady=10)
+
+        tk.Label(self.config_frame, text='视频目录:').grid(row=0, column=0, padx=5, pady=5, sticky='e')
+        self.video_dirs_var = tk.StringVar(value=','.join(VIDEO_DIRS))
+        self.video_dirs_entry = tk.Entry(self.config_frame, textvariable=self.video_dirs_var, width=50)
+        self.video_dirs_entry.grid(row=0, column=1, padx=5, pady=5)
+
+        tk.Label(self.config_frame, text='视频后缀:').grid(row=1, column=0, padx=5, pady=5, sticky='e')
+        self.video_suffixes_var = tk.StringVar(value=','.join(VIDEO_SUFFIXES))
+        self.video_suffixes_entry = tk.Entry(self.config_frame, textvariable=self.video_suffixes_var, width=50)
+        self.video_suffixes_entry.grid(row=1, column=1, padx=5, pady=5)
+
+        tk.Label(self.config_frame, text='Whisper 模型:').grid(row=2, column=0, padx=5, pady=5, sticky='e')
+        self.whisper_model_var = tk.StringVar(value=WHISPER_MODEL)
+        self.whisper_model_entry = tk.Entry(self.config_frame, textvariable=self.whisper_model_var, width=50)
+        self.whisper_model_entry.grid(row=2, column=1, padx=5, pady=5)
+
+        tk.Label(self.config_frame, text='源语言:').grid(row=3, column=0, padx=5, pady=5, sticky='e')
+        self.source_language_var = tk.StringVar(value=TRANSLATE_CONFIG['source_language'])
+        self.source_language_entry = tk.Entry(self.config_frame, textvariable=self.source_language_var, width=50)
+        self.source_language_entry.grid(row=3, column=1, padx=5, pady=5)
+
+        tk.Label(self.config_frame, text='目标语言:').grid(row=4, column=0, padx=5, pady=5, sticky='e')
+        self.target_language_var = tk.StringVar(value=TRANSLATE_CONFIG['target_language'])
+        self.target_language_entry = tk.Entry(self.config_frame, textvariable=self.target_language_var, width=50)
+        self.target_language_entry.grid(row=4, column=1, padx=5, pady=5)
+
+        # 进度条部分
+        self.progress_frame = tk.LabelFrame(self.root, text='进度')
+        self.progress_frame.pack(fill='x', padx=10, pady=10)
+
+        self.progress_var = tk.DoubleVar()
+        self.progress_bar = ttk.Progressbar(self.progress_frame, variable=self.progress_var, maximum=100)
+        self.progress_bar.pack(fill='x', padx=5, pady=5)
+
+        self.progress_label = tk.Label(self.progress_frame, text='进度: 0.00% 剩余时间: 00:00:00')
+        self.progress_label.pack(padx=5, pady=5)
+
+        # 按钮部分
+        self.button_frame = tk.Frame(self.root)
+        self.button_frame.pack(fill='x', padx=10, pady=10)
+
+        self.start_button = tk.Button(self.button_frame, text='开始导出', command=self.start_processing)
+        self.start_button.pack(side='left', padx=5, pady=5)
+
+        self.stop_button = tk.Button(self.button_frame, text='停止', command=self.stop_processing)
+        self.stop_button.pack(side='left', padx=5, pady=5)
+
+        self.check_button = tk.Button(self.button_frame, text='检查依赖', command=self.check_dependencies)
+        self.check_button.pack(side='left', padx=5, pady=5)
+
+        self.install_git_button = tk.Button(self.button_frame, text='安装git', command=self.install_git)
+
+        self.install_git_button.pack(side='left', padx=5, pady=5)
+
+        self.install_ffmpeg_button = tk.Button(self.button_frame, text='安装ffmpeg', command=self.install_ffmpeg)
+        self.install_ffmpeg_button.pack(side='left', padx=5, pady=5)
+
+        self.stop_flag = False
+
+    def start_processing(self):
+        self.stop_flag = False
+        self.start_button.config(state='disabled')
+        self.processing_thread = threading.Thread(target=self.process_files)
+        self.processing_thread.start()
+
+    def stop_processing(self):
+        self.stop_flag = True
+        self.start_button.config(state='normal')
+
+    def process_files(self):
+        video_dirs = self.video_dirs_var.get().split(',')
+        video_suffixes = self.video_suffixes_var.get().split(',')
+        whisper_model = self.whisper_model_var.get()
+        source_language = self.source_language_var.get()
+        target_language = self.target_language_var.get()
+
+        # 假设我们有一个函数 `get_video_files` 来获取所有视频文件
+        video_files = get_video_files(video_dirs, video_suffixes)
+        total_files = len(video_files)
+        
+        if total_files == 0:
+            messagebox.showwarning("警告", "没有找到任何视频文件")
+            self.start_button.config(state='normal')
+            return
+
+        start_time = time.time()
+        for index, video_file in enumerate(video_files):
+            if self.stop_flag:
+                break
+            # audio_path = os.path.splitext(video_file)[0] + '.wav'
+            # extract_audio(video_file, audio_path)
+            # 其他处理步骤...
+            try:
+                base_dir, file_name = os.path.split(video_file)
+                base_name = os.path.splitext(file_name)[0]
+                wav_file = os.path.join(base_dir, f'{base_name}.wav')
+                src_lang = TRANSLATE_CONFIG['source_language']
+                srt_file = os.path.join(base_dir, f'{base_name}.{src_lang}.srt')
+
+                if not os.path.exists(srt_file):
+                    srt_file = os.path.join(base_dir, f'{base_name}.{src_lang}')
+                    if not os.path.exists(wav_file):
+                        extract_audio(video_file, wav_file)
+                        print('完成音频文件提取，准备生成字幕文件')
+
+                    cmd = f'./whisper.cpp/main -m ./whisper.cpp/models/ggml-{whisper_model}.bin -f "{wav_file}" -osrt -of "{srt_file}"'
+                    subprocess.run(cmd, shell=True, check=True)
+
+                    global processed_count
+                    processed_count = processed_count + 1
+
+                if os.path.exists(wav_file):
+                    os.remove(wav_file)
+                    print(f'删除wav文件 {wav_file}')
+
+            except Exception as e:
+                print(f'执行出错 {e}')
+
+            progress = (index + 1) / total_files * 100
+            elapsed_time = time.time() - start_time
+            estimated_total_time = elapsed_time / (index + 1) * total_files
+            remaining_time = estimated_total_time - elapsed_time
+
+            self.progress_var.set(progress)
+            self.progress_label.config(text=f'进度: {progress:.2f}% 剩余时间: {time.strftime("%H:%M:%S", time.gmtime(remaining_time))}')
+            self.root.update_idletasks()
+
+        self.start_button.config(state='normal')
+        messagebox.showinfo("完成", "所有视频文件处理完成")
+
+    def check_dependencies(self):
+        git_installed = self.check_git_installed()
+        ffmpeg_installed = self.check_ffmpeg_installed()
+
+        message = "依赖环境检查结果:\n"
+        message += f"git: {'已安装' if git_installed else '未安装'}\n"
+        message += f"ffmpeg: {'已安装' if ffmpeg_installed else '未安装'}"
+        messagebox.showinfo("检查依赖", message)
+
+    def check_git_installed(self):
+        try:
+            subprocess.check_call(['git', '--version'])
+            return True
+        except subprocess.CalledProcessError:
+            return False
+
+    def check_ffmpeg_installed(self):
+        try:
+            subprocess.check_call(['ffmpeg', '-version'])
+            return True
+        except subprocess.CalledProcessError:
+            return False
+
+    def install_git(self):
+        if self.check_git_installed():
+            messagebox.showinfo("安装git", "git 已经安装")
+            return
+
+        if os.name == 'nt':  # Windows
+            subprocess.run(['powershell', 'Start-Process', 'powershell', '-ArgumentList', '"winget install --id Git.Git -e --source winget"', '-Verb', 'RunAs'])
+        else:
+            subprocess.run(['sudo', 'apt-get', 'install', 'git'])
+
+    def install_ffmpeg(self):
+        if self.check_ffmpeg_installed():
+            messagebox.showinfo("安装ffmpeg", "ffmpeg 已经安装")
+            return
+
+        if os.name == 'nt':  # Windows
+            subprocess.run(['powershell', 'Start-Process', 'powershell', '-ArgumentList', '"winget install --id Gyan.FFmpeg -e --source winget"', '-Verb', 'RunAs'])
+        else:
+            subprocess.run(['sudo', 'apt-get', 'install', 'ffmpeg'])
+
+def get_video_files(dirs, suffixes):
+    video_files = []
+    for directory in dirs:
+        for root, _, files in os.walk(directory):
+            for file in files:
+                if any(file.endswith(suffix) for suffix in suffixes):
+                    video_files.append(os.path.join(root, file))
+    return video_files
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = App(root)
+    root.mainloop()
