@@ -13,7 +13,7 @@ load_dotenv()
 
 # 翻译配置,视频原语言与翻译后的目标语言
 VIDEO_DIRS = [d.strip() for d in os.getenv('VIDEO_DIRS').split(',')]
-VIDEO_SUFFIX = os.getenv('VIDEO_SUFFIX')
+VIDEO_SUFFIXES = [s.strip() for s in os.getenv('VIDEO_SUFFIXES', '').split(',')]
 WHISPER_MODEL = os.getenv('WHISPER_MODEL')
 TRANSLATE_CONFIG = {
     'source_language': os.getenv('SOURCE_LANGUAGE'),
