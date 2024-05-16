@@ -42,6 +42,7 @@ def process_file(file_path, base_dir):
                 cmd = f'./whisper.cpp/main -m ./whisper.cpp/models/ggml-{WHISPER_MODEL}.bin -f "{wav_file}" -osrt -of "{srt_file}"'
                 subprocess.run(cmd, shell=True, check=True)
 
+                global processed_count
                 processed_count = processed_count + 1
 
             if os.path.exists(wav_file):
