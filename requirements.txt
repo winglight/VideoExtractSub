@@ -1,2 +1,5 @@
 python-dotenv
 tk
+requests
+markdown2
+tkhtmlview
