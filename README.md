@@ -6,6 +6,10 @@
 
 **VideoExtractSub** 是一个用于从视频文件中提取字幕的开源工具。该项目旨在帮助用户轻松地从各种格式的视频文件中提取出内嵌的字幕，支持字幕格式:SRT。
 
+## 特别说明
+
+本代码有90%来自AI（Claude3.5）的协助生成，另有文档说明整个过程：[AI助我写代码（1）：批量生成视频字幕——宇哥自习室](https://broyustudio.com/)
+
 ## 项目特点
 
 - **多格式支持**：支持多种视频格式，如 MP4、MKV、AVI 等。
@@ -25,6 +29,7 @@
 
 - **FFmpeg**：需要预先安装 FFmpeg，具体安装方法请参考 [FFmpeg 官方文档](https://ffmpeg.org/download.html)。
 - **Python 3.6+**：请确保已安装 Python 3.6 或更高版本。
+- **Git** 需要本地有安装git，并且命令行中可以运行git
 
 ### 安装步骤
 
@@ -55,7 +60,7 @@
 
 使用以下命令启动GUI界面：
 ```bash
-python extract_subtitle.py -i <input_video_file> -o <output_subtitle_file>
+python main.py
 ```
 
 **注意：如果文件夹路径中包括英文逗号，需要删除后再生成字幕，否则解析时会报错**
