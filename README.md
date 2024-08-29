@@ -8,7 +8,7 @@
 
 ## 特别说明
 
-本代码有90%来自AI（Claude3.5）的协助生成，另有文档说明整个过程：[AI助我写代码（1）：批量生成视频字幕——宇哥自习室](https://broyustudio.com/)
+本代码有90%来自AI（Claude3.5）的协助生成，另有文档说明整个过程：[AI助我写代码（1）：批量生成视频字幕——宇哥自习室](https://www.broyustudio.com/2024/08/28/AI-Help-Video-Subtract-Srt.html)
 
 ## 项目特点
 
