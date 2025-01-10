@@ -29,7 +29,7 @@ install_whisper()
 #     file_name = os.path.basename(file_path)
 #     _, file_ext = os.path.splitext(file_name)
 #     if file_ext in VIDEO_SUFFIXES and not file_name.startswith("."):
-#         print(f'开始处理文件：{file_path}')
+#         print(f'Start processing file: {file_path}')
 #         try:
 #             base_name = os.path.splitext(file_name)[0]
 #             wav_file = os.path.join(base_dir, f'{base_name}.wav')
@@ -40,7 +40,7 @@ install_whisper()
 #                 srt_file = os.path.join(base_dir, f'{base_name}.{src_lang}')
 #                 if not os.path.exists(wav_file):
 #                     extract_audio(file_path, wav_file)
-#                     print('完成音频文件提取，准备生成字幕文件')
+#                     print('Audio file extraction complete. Preparing to generate subtitle file.')
 
 #                 cmd = f'./whisper.cpp/main -m ./whisper.cpp/models/ggml-{WHISPER_MODEL}.bin -f "{wav_file}" -osrt -of "{srt_file}"'
 #                 subprocess.run(cmd, shell=True, check=True)
@@ -50,10 +50,10 @@ install_whisper()
 
 #             if os.path.exists(wav_file):
 #                 os.remove(wav_file)
-#                 print(f'删除wav文件 {wav_file}')
+#                 print(f'Removed wav file {wav_file}')
 
 #         except Exception as e:
-#             print(f'执行出错 {e}')
+#             print(f'An error occurred: {e}')
 
 # def traverse_dirs(dir_paths, level=1):
 #     if level > 4:
@@ -66,80 +66,79 @@ install_whisper()
 #                 traverse_dirs([entry_path], level + 1)
 #             else:
 #                 process_file(entry_path, dir_path)
-#                 # 记时、刷新进度\
+#                 # Timer and progress refresh
 #                 if processed_count > 0:
 #                     elapsed_time = time.time() - start_time
 #                     remaining_time = (elapsed_time / processed_count) * (total_files - processed_count)
 #                     progress = processed_count / total_files * 100
-#                     print(f"\r进度: {progress:.2f}% 剩余时间: {time.strftime('%H:%M:%S', time.gmtime(remaining_time))}", end="")
+#                     print(f"\rProgress: {progress:.2f}% Estimated remaining time: {time.strftime('%H:%M:%S', time.gmtime(remaining_time))}", end="")
 
 # traverse_dirs(VIDEO_DIRS)         
 
 class App:
     def __init__(self, root):
         self.root = root
-        self.root.title('视频字幕批量导出工具')
+        self.root.title('Batch Video Subtitle Export Tool')
         self.create_widgets()
 
     def create_widgets(self):
-        # 配置部分
-        self.config_frame = tk.LabelFrame(self.root, text='配置')
+        # Configuration section
+        self.config_frame = tk.LabelFrame(self.root, text='Configuration')
         self.config_frame.pack(fill='x', padx=10, pady=10)
 
-        tk.Label(self.config_frame, text='视频目录:').grid(row=0, column=0, padx=5, pady=5, sticky='e')
+        tk.Label(self.config_frame, text='Video Directories:').grid(row=0, column=0, padx=5, pady=5, sticky='e')
         self.video_dirs_var = tk.StringVar(value=','.join(VIDEO_DIRS))
         self.video_dirs_entry = tk.Entry(self.config_frame, textvariable=self.video_dirs_var, width=50)
         self.video_dirs_entry.grid(row=0, column=1, padx=5, pady=5)
 
-        tk.Label(self.config_frame, text='视频后缀:').grid(row=1, column=0, padx=5, pady=5, sticky='e')
+        tk.Label(self.config_frame, text='Video Suffixes:').grid(row=1, column=0, padx=5, pady=5, sticky='e')
         self.video_suffixes_var = tk.StringVar(value=','.join(VIDEO_SUFFIXES))
         self.video_suffixes_entry = tk.Entry(self.config_frame, textvariable=self.video_suffixes_var, width=50)
         self.video_suffixes_entry.grid(row=1, column=1, padx=5, pady=5)
 
-        tk.Label(self.config_frame, text='Whisper 模型:').grid(row=2, column=0, padx=5, pady=5, sticky='e')
+        tk.Label(self.config_frame, text='Whisper Model:').grid(row=2, column=0, padx=5, pady=5, sticky='e')
         self.whisper_model_var = tk.StringVar(value=WHISPER_MODEL)
         self.whisper_model_entry = tk.Entry(self.config_frame, textvariable=self.whisper_model_var, width=50)
         self.whisper_model_entry.grid(row=2, column=1, padx=5, pady=5)
 
-        tk.Label(self.config_frame, text='源语言:').grid(row=3, column=0, padx=5, pady=5, sticky='e')
+        tk.Label(self.config_frame, text='Source Language:').grid(row=3, column=0, padx=5, pady=5, sticky='e')
         self.source_language_var = tk.StringVar(value=TRANSLATE_CONFIG['source_language'])
         self.source_language_entry = tk.Entry(self.config_frame, textvariable=self.source_language_var, width=50)
         self.source_language_entry.grid(row=3, column=1, padx=5, pady=5)
 
-        tk.Label(self.config_frame, text='目标语言:').grid(row=4, column=0, padx=5, pady=5, sticky='e')
+        tk.Label(self.config_frame, text='Target Language:').grid(row=4, column=0, padx=5, pady=5, sticky='e')
         self.target_language_var = tk.StringVar(value=TRANSLATE_CONFIG['target_language'])
         self.target_language_entry = tk.Entry(self.config_frame, textvariable=self.target_language_var, width=50)
         self.target_language_entry.grid(row=4, column=1, padx=5, pady=5)
 
-        # 进度条部分
-        self.progress_frame = tk.LabelFrame(self.root, text='进度')
+        # Progress section
+        self.progress_frame = tk.LabelFrame(self.root, text='Progress')
         self.progress_frame.pack(fill='x', padx=10, pady=10)
 
         self.progress_var = tk.DoubleVar()
         self.progress_bar = ttk.Progressbar(self.progress_frame, variable=self.progress_var, maximum=100)
         self.progress_bar.pack(fill='x', padx=5, pady=5)
 
-        self.progress_label = tk.Label(self.progress_frame, text='进度: 0.00% 剩余时间: 00:00:00')
+        self.progress_label = tk.Label(self.progress_frame, text='Progress: 0.00% Remaining Time: 00:00:00')
         self.progress_label.pack(padx=5, pady=5)
 
-        # 按钮部分
+        # Buttons section
         self.button_frame = tk.Frame(self.root)
         self.button_frame.pack(fill='x', padx=10, pady=10)
 
-        self.start_button = tk.Button(self.button_frame, text='开始导出', command=self.start_processing)
+        self.start_button = tk.Button(self.button_frame, text='Start Export', command=self.start_processing)
         self.start_button.pack(side='left', padx=5, pady=5)
 
-        self.stop_button = tk.Button(self.button_frame, text='停止', command=self.stop_processing)
+        self.stop_button = tk.Button(self.button_frame, text='Stop', command=self.stop_processing)
         self.stop_button.pack(side='left', padx=5, pady=5)
 
-        self.check_button = tk.Button(self.button_frame, text='检查依赖', command=self.check_dependencies)
+        self.check_button = tk.Button(self.button_frame, text='Check Dependencies', command=self.check_dependencies)
         self.check_button.pack(side='left', padx=5, pady=5)
 
-        self.install_git_button = tk.Button(self.button_frame, text='安装git', command=self.install_git)
-
+        self.install_git_button = tk.Button(self.button_frame, text='Install Git', command=self.install_git)
         self.install_git_button.pack(side='left', padx=5, pady=5)
 
-        self.install_ffmpeg_button = tk.Button(self.button_frame, text='安装ffmpeg', command=self.install_ffmpeg)
+        self.install_ffmpeg_button = tk.Button(self.button_frame, text='Install FFmpeg', command=self.install_ffmpeg)
         self.install_ffmpeg_button.pack(side='left', padx=5, pady=5)
 
         self.stop_flag = False
@@ -161,12 +160,12 @@ class App:
         source_language = self.source_language_var.get()
         target_language = self.target_language_var.get()
 
-        # 假设我们有一个函数 `get_video_files` 来获取所有视频文件
+        # Assuming we have a function `get_video_files` to fetch all video files
         video_files = get_video_files(video_dirs, video_suffixes)
         total_files = len(video_files)
         
         if total_files == 0:
-            messagebox.showwarning("警告", "没有找到任何视频文件")
+            messagebox.showwarning("Warning", "No video files found.")
             self.start_button.config(state='normal')
             return
 
@@ -175,9 +174,6 @@ class App:
         for index, video_file in enumerate(video_files):
             if self.stop_flag:
                 break
-            # audio_path = os.path.splitext(video_file)[0] + '.wav'
-            # extract_audio(video_file, audio_path)
-            # 其他处理步骤...
             try:
                 base_dir, file_name = os.path.split(video_file)
                 base_name = os.path.splitext(file_name)[0]
@@ -189,7 +185,7 @@ class App:
                     srt_file = os.path.join(base_dir, f'{base_name}.{src_lang}')
                     if not os.path.exists(wav_file):
                         extract_audio(video_file, wav_file)
-                        print('完成音频文件提取，准备生成字幕文件')
+                        print('Audio extraction completed, preparing to generate subtitle file.')
 
                     cmd = f'./whisper.cpp/main -m ./whisper.cpp/models/ggml-{whisper_model}.bin -f "{wav_file}" -osrt -of "{srt_file}"'
                     subprocess.run(cmd, shell=True, check=True)
@@ -198,10 +194,10 @@ class App:
 
                 if os.path.exists(wav_file):
                     os.remove(wav_file)
-                    print(f'删除wav文件 {wav_file}')
+                    print(f'Removed wav file {wav_file}')
 
             except Exception as e:
-                print(f'执行出错 {e}')
+                print(f'Error occurred: {e}')
 
             progress = (index + 1) / total_files * 100
             elapsed_time = time.time() - start_time
@@ -209,20 +205,20 @@ class App:
             remaining_time = estimated_total_time - elapsed_time
 
             self.progress_var.set(progress)
-            self.progress_label.config(text=f'{index}/{total_files} 进度: {progress:.2f}% 剩余时间: {time.strftime("%H:%M:%S", time.gmtime(remaining_time))} \n{video_file}')
+            self.progress_label.config(text=f'{index}/{total_files} Progress: {progress:.2f}% Remaining Time: {time.strftime("%H:%M:%S", time.gmtime(remaining_time))} \n{video_file}')
             self.root.update_idletasks()
 
         self.start_button.config(state='normal')
-        messagebox.showinfo("完成", "所有视频文件处理完成")
+        messagebox.showinfo("Completed", "All video files have been processed.")
 
     def check_dependencies(self):
         git_installed = self.check_git_installed()
         ffmpeg_installed = self.check_ffmpeg_installed()
 
-        message = "依赖环境检查结果:\n"
-        message += f"git: {'已安装' if git_installed else '未安装'}\n"
-        message += f"ffmpeg: {'已安装' if ffmpeg_installed else '未安装'}"
-        messagebox.showinfo("检查依赖", message)
+        message = "Dependency Check Results:\n"
+        message += f"git: {'Installed' if git_installed else 'Not Installed'}\n"
+        message += f"ffmpeg: {'Installed' if ffmpeg_installed else 'Not Installed'}"
+        messagebox.showinfo("Check Dependencies", message)
 
     def check_git_installed(self):
         try:
@@ -240,7 +236,7 @@ class App:
 
     def install_git(self):
         if self.check_git_installed():
-            messagebox.showinfo("安装git", "git 已经安装")
+            messagebox.showinfo("Install Git", "Git is already installed.")
             return
 
         if os.name == 'nt':  # Windows
@@ -250,7 +246,7 @@ class App:
 
     def install_ffmpeg(self):
         if self.check_ffmpeg_installed():
-            messagebox.showinfo("安装ffmpeg", "ffmpeg 已经安装")
+            messagebox.showinfo("Install FFmpeg", "FFmpeg is already installed.")
             return
 
         if os.name == 'nt':  # Windows
