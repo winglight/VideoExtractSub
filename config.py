@@ -15,14 +15,8 @@ load_dotenv()
 VIDEO_DIRS = [d.strip() for d in os.getenv('VIDEO_DIRS').split(',')]
 VIDEO_SUFFIXES = [s.strip() for s in os.getenv('VIDEO_SUFFIXES', '').split(',')]
 WHISPER_MODEL = os.getenv('WHISPER_MODEL')
+SUBTITLE_FORMATS = [s.strip() for s in os.getenv('SUBTITLE_FORMATS', '.srt').split(',')]
 TRANSLATE_CONFIG = {
     'source_language': os.getenv('SOURCE_LANGUAGE'),
     'target_language': os.getenv('TARGET_LANGUAGE')
 }
-
-class SupportedService:
-    BAIDU = 'baidu'
-    VOLC = 'volc'
-    DEEPLX = 'deeplx'
-
-TRANSLATE_SERVICE_PROVIDER = SupportedService.__dict__.get(os.getenv('TRANSLATE_SERVICE_PROVIDER'))

@@ -3,3 +3,7 @@ tk
 requests
 markdown2
 tkhtmlview
+transformers
+torch
+sentencepiece
+multiprocessing

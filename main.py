@@ -8,6 +8,8 @@ import time
 import threading
 import tkinter as tk
 from tkinter import filedialog, ttk, messagebox
+import multiprocessing
+from translator import translate_srt_file_process
 
 install_whisper()
 
@@ -80,6 +82,7 @@ class App:
         self.root = root
         self.root.title('Batch Video Subtitle Export Tool')
         self.create_widgets()
+        self.translation_processes = []  # 添加翻译进程列表
 
     def create_widgets(self):
         # Configuration section
@@ -131,6 +134,10 @@ class App:
 
         self.stop_button = tk.Button(self.button_frame, text='Stop', command=self.stop_processing)
         self.stop_button.pack(side='left', padx=5, pady=5)
+        
+        # 添加翻译按钮
+        self.translate_button = tk.Button(self.button_frame, text='Translate SRT Files', command=self.start_translation)
+        self.translate_button.pack(side='left', padx=5, pady=5)
 
         self.check_button = tk.Button(self.button_frame, text='Check Dependencies', command=self.check_dependencies)
         self.check_button.pack(side='left', padx=5, pady=5)
@@ -254,14 +261,119 @@ class App:
         else:
             subprocess.run(['sudo', 'apt-get', 'install', 'ffmpeg'])
 
-def get_video_files(dirs, suffixes):
-    video_files = []
+    def get_video_files(dirs, suffixes):
+        video_files = []
+        for directory in dirs:
+            for root, _, files in os.walk(directory):
+                for file in files:
+                    if any(file.endswith(suffix) for suffix in suffixes):
+                        video_files.append(os.path.join(root, file))
+        return video_files
+
+
+    def start_translation(self):
+        """开始翻译SRT文件的处理"""
+        self.translate_button.config(state='disabled')
+        self.translation_thread = threading.Thread(target=self.translate_files)
+        self.translation_thread.start()
+
+    def translate_files(self):
+        """翻译所有SRT文件的处理函数"""
+        video_dirs = self.video_dirs_var.get().split(',')
+        source_language = self.source_language_var.get()
+        target_language = self.target_language_var.get()
+        
+        # 获取所有SRT文件
+        srt_files = get_srt_files(video_dirs, source_language)
+        total_files = len(srt_files)
+        
+        if total_files == 0:
+            # 使用after方法确保在主线程中显示消息框
+            self.root.after(0, lambda: messagebox.showwarning("警告", f"未找到{', '.join(SUBTITLE_FORMATS)}格式的字幕文件。"))
+            self.root.after(0, lambda: self.translate_button.config(state='normal'))
+            return
+        
+        # 清理之前的翻译进程
+        for p in self.translation_processes:
+            if p.is_alive():
+                p.terminate()
+        self.translation_processes = []
+        
+        # 创建进程池
+        pool = multiprocessing.Pool(processes=min(multiprocessing.cpu_count(), 4))
+        results = []
+        
+        # 提交翻译任务
+        for srt_file in srt_files:
+            result = pool.apply_async(
+                translate_srt_file_process, 
+                (srt_file, source_language, target_language),
+                callback=self.update_translation_progress
+            )
+            results.append(result)
+        
+        # 关闭进程池
+        pool.close()
+        
+        # 更新进度条
+        start_time = time.time()
+        completed = 0
+        self.progress_var.set(0)
+        
+        while completed < total_files:
+            completed = sum(1 for r in results if r.ready())
+            progress = completed / total_files * 100
+            
+            elapsed_time = time.time() - start_time
+            if completed > 0:
+                estimated_total_time = elapsed_time / completed * total_files
+                remaining_time = estimated_total_time - elapsed_time
+            else:
+                remaining_time = 0
+            
+            self.progress_var.set(progress)
+            self.progress_label.config(
+                text=f'翻译进度: {completed}/{total_files} ({progress:.2f}%) 剩余时间: {time.strftime("%H:%M:%S", time.gmtime(remaining_time))}'
+            )
+            self.root.update_idletasks()
+            time.sleep(0.5)
+            
+            # 检查是否所有任务都已完成
+            if all(r.ready() for r in results):
+                break
+        
+        # 等待所有进程完成
+        pool.join()
+        
+        # 使用after方法确保在主线程中更新UI
+        self.root.after(0, lambda: self.translate_button.config(state='normal'))
+        self.root.after(0, lambda: messagebox.showinfo("完成", f"所有字幕文件翻译完成，共处理 {completed} 个文件。"))
+
+    def update_translation_progress(self, result):
+        """翻译进程回调函数"""
+        if result:
+            print(f"翻译完成: {result}")
+
+def get_srt_files(dirs, source_language):
+    """获取所有字幕文件"""
+    from config import SUBTITLE_FORMATS
+    
+    subtitle_files = []
     for directory in dirs:
+        if not directory.strip():  # 跳过空目录
+            continue
+            
         for root, _, files in os.walk(directory):
             for file in files:
-                if any(file.endswith(suffix) for suffix in suffixes):
-                    video_files.append(os.path.join(root, file))
-    return video_files
+                # 检查文件是否是支持的字幕格式
+                file_ext = os.path.splitext(file)[1].lower()
+                if file_ext in SUBTITLE_FORMATS:
+                    # 检查是否包含源语言标记
+                    # if f'.{source_language}{file_ext}' in file or f'.{source_language}.' in file:
+                    subtitle_files.append(os.path.join(root, file))
+    
+    print(f"找到 {len(subtitle_files)} 个字幕文件")
+    return subtitle_files
 
 if __name__ == "__main__":
     root = tk.Tk()
