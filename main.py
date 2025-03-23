@@ -1,7 +1,7 @@
 import os
 import subprocess
 from config import (
-    VIDEO_DIRS, VIDEO_SUFFIXES, WHISPER_MODEL, TRANSLATE_CONFIG
+    VIDEO_DIRS, VIDEO_SUFFIXES, WHISPER_MODEL, TRANSLATE_CONFIG, SOURCE_LANGUAGE
 )
 from utils import extract_audio, install_whisper
 import time
@@ -205,7 +205,7 @@ class App:
                         break
                 
                 if not subtitle_exists:
-                    srt_file = os.path.join(base_dir, f'{base_name}.{src_lang}.srt')
+                    srt_file = os.path.join(base_dir, f'{base_name}.{SOURCE_LANGUAGE}.srt')
                     if not os.path.exists(wav_file):
                         extract_audio(video_file, wav_file)
                         print('Audio extraction completed, preparing to generate subtitle file.')

@@ -14,6 +14,7 @@ load_dotenv()
 # 翻译配置,视频原语言与翻译后的目标语言
 VIDEO_DIRS = [d.strip() for d in os.getenv('VIDEO_DIRS').split(',')]
 VIDEO_SUFFIXES = [s.strip() for s in os.getenv('VIDEO_SUFFIXES', '').split(',')]
+SOURCE_LANGUAGE = os.getenv('SOURCE_LANGUAGE')
 WHISPER_MODEL = os.getenv('WHISPER_MODEL')
 SUBTITLE_FORMATS = [s.strip() for s in os.getenv('SUBTITLE_FORMATS', '.srt').split(',')]
 TRANSLATE_CONFIG = {
