@@ -185,20 +185,38 @@ class App:
                 base_dir, file_name = os.path.split(video_file)
                 base_name = os.path.splitext(file_name)[0]
                 wav_file = os.path.join(base_dir, f'{base_name}.wav')
-                src_lang = TRANSLATE_CONFIG['source_language']
-                srt_file = os.path.join(base_dir, f'{base_name}.{src_lang}.srt')
-
-                if not os.path.exists(srt_file):
-                    srt_file = os.path.join(base_dir, f'{base_name}.{src_lang}')
+                
+                # 修改判断字幕文件是否存在的逻辑
+                # 检查是否存在以视频文件名为前缀的任意字幕文件
+                subtitle_exists = False
+                from config import SUBTITLE_FORMATS
+                
+                for root, _, files in os.walk(base_dir):
+                    for file in files:
+                        # 检查文件是否以视频文件名为前缀
+                        if file.startswith(base_name):
+                            # 检查文件扩展名是否在配置的字幕格式中
+                            file_ext = os.path.splitext(file)[1].lower()
+                            if file_ext in SUBTITLE_FORMATS:
+                                subtitle_exists = True
+                                print(f"找到匹配的字幕文件: {os.path.join(root, file)}")
+                                break
+                    if subtitle_exists:
+                        break
+                
+                if not subtitle_exists:
+                    srt_file = os.path.join(base_dir, f'{base_name}.{src_lang}.srt')
                     if not os.path.exists(wav_file):
                         extract_audio(video_file, wav_file)
                         print('Audio extraction completed, preparing to generate subtitle file.')
-
+                
                     cmd = f'./whisper.cpp/main -m ./whisper.cpp/models/ggml-{whisper_model}.bin -f "{wav_file}" -osrt -of "{srt_file}"'
                     subprocess.run(cmd, shell=True, check=True)
-
+                
                     processed_count = processed_count + 1
-
+                else:
+                    print(f"跳过处理视频 {video_file}，已存在匹配的字幕文件")
+                
                 if os.path.exists(wav_file):
                     os.remove(wav_file)
                     print(f'Removed wav file {wav_file}')
