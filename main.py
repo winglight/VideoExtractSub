@@ -168,7 +168,7 @@ class App:
         target_language = self.target_language_var.get()
 
         # Assuming we have a function `get_video_files` to fetch all video files
-        video_files = get_video_files(video_dirs, video_suffixes)
+        video_files = self.get_video_files(video_dirs, video_suffixes)
         total_files = len(video_files)
         
         if total_files == 0:
@@ -261,7 +261,7 @@ class App:
         else:
             subprocess.run(['sudo', 'apt-get', 'install', 'ffmpeg'])
 
-    def get_video_files(dirs, suffixes):
+    def get_video_files(self, dirs, suffixes):
         video_files = []
         for directory in dirs:
             for root, _, files in os.walk(directory):
