@@ -1,7 +1,7 @@
 import os
 import subprocess
 from config import (
-    VIDEO_DIRS, VIDEO_SUFFIXES, WHISPER_MODEL, TRANSLATE_CONFIG, SOURCE_LANGUAGE
+    VIDEO_DIRS, VIDEO_SUFFIXES, WHISPER_MODEL, TRANSLATE_CONFIG, SOURCE_LANGUAGE, SUBTITLE_FORMATS
 )
 from utils import extract_audio, install_whisper
 import time
@@ -189,7 +189,6 @@ class App:
                 # 修改判断字幕文件是否存在的逻辑
                 # 检查是否存在以视频文件名为前缀的任意字幕文件
                 subtitle_exists = False
-                from config import SUBTITLE_FORMATS
                 
                 for root, _, files in os.walk(base_dir):
                     for file in files:
@@ -374,8 +373,6 @@ class App:
 
 def get_srt_files(dirs, source_language):
     """获取所有字幕文件"""
-    from config import SUBTITLE_FORMATS
-    
     subtitle_files = []
     for directory in dirs:
         if not directory.strip():  # 跳过空目录
